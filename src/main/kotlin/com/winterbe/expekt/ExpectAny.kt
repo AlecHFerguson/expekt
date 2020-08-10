@@ -5,7 +5,7 @@ package com.winterbe.expekt
  *
  * @author Benjamin Winterberg
  */
-open class ExpectAny<T>(protected val subject: T?, protected val flavor: Flavor) {
+open class ExpectAny<T : Any>(protected val subject: T?, protected val flavor: Flavor) {
 
     internal val words = arrayListOf<String>()
 
@@ -87,18 +87,36 @@ open class ExpectAny<T>(protected val subject: T?, protected val flavor: Flavor)
     /**
      * Verifies that the given predicates evaluates to true, otherwise throws an `AssertionError`.
      */
-    protected fun verify(rule: () -> Boolean) {
+    protected fun verify(expected: T? = null, rule: () -> Boolean) {
         val truthy = rule()
         if (!truthy && !negated) {
-            fail()
+            fail(expected = expected)
         }
         if (truthy && negated) {
-            fail()
+            fail(expected = expected)
         }
     }
 
-    private fun fail() {
-        val message = words.joinToString(separator = " ")
+    private fun generatePropertyComparison(subject: T?, expected: T?): String {
+        val propertyResults = mutableListOf<String>()
+        if (subject != null && expected != null) {
+            val subjectFields = subject.javaClass.declaredFields
+            subjectFields.forEach { property ->
+                val subjectValue = property.get(subject)
+                val expectedValue = property.get(expected)
+                if (subjectValue == expectedValue) {
+                    propertyResults.add("${property.name} = $subjectValue")
+                } else {
+                    propertyResults.add("+ ${property.name} = $subjectValue")
+                    propertyResults.add("- ${property.name} = $expectedValue")
+                }
+            }
+        }
+        return propertyResults.joinToString("\n")
+    }
+
+    private fun fail(expected: T?) {
+        val message = words.joinToString(separator = " ") + generatePropertyComparison(subject, expected)
         throw AssertionError(message)
     }
 

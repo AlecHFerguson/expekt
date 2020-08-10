@@ -1,6 +1,6 @@
 package com.winterbe.expekt
 
-fun <T> expect(subject: T?): ExpectAny<T?> {
+fun <T : Any> expect(subject: T?): ExpectAny<T> {
     return ExpectAny(subject, Flavor.EXPECT)
 }
 
@@ -32,7 +32,7 @@ fun <K, V> expect(subject: Map<K, V>?): ExpectMap<K, V> {
     return ExpectMap(subject, Flavor.EXPECT)
 }
 
-val <T> T?.should: ExpectAny<T> get() {
+val <T : Any> T?.should: ExpectAny<T> get() {
     return ExpectAny(this, Flavor.SHOULD)
 }
 
